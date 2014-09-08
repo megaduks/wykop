@@ -13,3 +13,50 @@ similarity.forward.by.category <- aggregate(aggregated.columns~category, data, m
 # compute backward similarities across categories
 aggregated.columns <- cbind(avg_sim_before1,avg_sim_before2,avg_sim_before3,avg_sim_before4,avg_sim_before5,avg_sim_before6,avg_sim_before7)
 similarity.backward.by.category <- aggregate(aggregated.columns~category, data, mean)
+
+# read data on random similarity between comments
+# the file contains the similarity between a few selected comments and all other comments in the dataset
+# this allows to compute the average expected similarity between any pair of comments
+options(java.parameters = "-Xmx2000m")
+library(xlsx)
+random.comments.stats <- array(0, dim = c(4,1,6))
+
+# second sheet contains an average similarity to a comment 'lol, robi się co raz zabawniej w tym prawodawstwie'
+# this is an example of a specific comment, not too generic and not too detailed
+random.comments.data <- read.xlsx2(file = "example-text-similarity.xlsx", sheetIndex = 2, startRow = 3, colIndex = c(1), colClasses = c("numeric"))
+random.comments.stats[1,,] <- as.matrix(summary(random.comments.data$sim))
+
+# third sheet contains an average similarity to a comment 'Ciekawe jak wielką gwiazdą byłby teraz Ritchie Valens'
+# this is an example of a very specific comment mentioning a proper name
+random.comments.data <- read.xlsx2(file = "example-text-similarity.xlsx", sheetIndex = 3, startRow = 3, colIndex = c(1), colClasses = c("numeric"))
+random.comments.stats[2,,] <- as.matrix(summary(random.comments.data$sim))
+
+# third sheet contains an average similarity to a comment 'DUPLIKAT: http://www.wykop.pl/link/1027277/manipulacja-polskich-mediow/ - główna'
+# this is an example of a very generic comment with an URL embedded
+random.comments.data <- read.xlsx2(file = "example-text-similarity.xlsx", sheetIndex = 4, startRow = 3, colIndex = c(1), colClasses = c("numeric"))
+random.comments.stats[3,,] <- as.matrix(summary(random.comments.data$sim))
+
+# third sheet contains an average similarity to a comment 'Coś chyba Ci nie wyszło.|Gaz gaz gaz gaz gaz gaz, gaz na ulicach|Zakop zakop zakop zakop zakop zakop, karabinem'
+# this is an example of a very specific long comment without proper names
+random.comments.data <- read.xlsx2(file = "example-text-similarity.xlsx", sheetIndex = 5, startRow = 5, colIndex = c(1), colClasses = c("numeric"))
+random.comments.stats[4,,] <- as.matrix(summary(random.comments.data$sim))
+
+# a summary of statistics pertaining to comment similarity
+# Min | 1st Qu.| Median | Mean | 3rd Qu. | Max
+random.comments.stats[,1,]
+
+# compute means over all four comment statistics
+aggregated.random.comments.stats <- colMeans(random.comments.stats[,1,])
+names(aggregated.random.comments.stats) <- c("Min", "1st Q", "Median", "Mean", "3rd Q", "Max")
+aggregated.random.comments.stats
+
+# plot an empirical cumulative density function of the similarity for one of the comments
+library(ggplot2)
+
+png("ecdf.comments.png")
+plot <- ggplot(random.comments.data, aes(x = sim)) + stat_ecdf(aes(colour = "red")) + ggtitle("Empirical cumulative density function") + labs(x = "similarity") + labs(y = "probability") + theme(legend.position = "none")
+plot
+dev.off()
+
+
+
