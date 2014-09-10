@@ -2,6 +2,8 @@
 # Research on the textual influence between groups of users of the popular link aggregator Wykop.pl
 #
 
+library(xtable)
+
 # read data on random similarity between comments
 # the file contains the similarity between a few selected comments and all other comments in the dataset
 # this allows to compute the average expected similarity between any pair of comments
@@ -163,9 +165,12 @@ library(scales)
 # remove data on anonymous authors
 clean.data <- data[authors_rank > 0, ]
 
+# we discretize the dataset into influencers and adopters using simple thresholds of -1 and +1
+model.data$class <- cut(model.data$sim.1.day, c(-Inf,-1,1,Inf))
+
 # create a dataset with comments, votes, and 1-day similarities
-model.data <- aggregate(cbind(clean.data$inc1,clean.data$comment_count,clean.data$votes)~authors_rank+published, clean.data, sum)
-names(model.data) <- c("rank", "published", "sim.1.day", "comments", "votes")
+model.data <- aggregate(cbind(clean.data$inc1, clean.data$comment_count, clean.data$votes, clean.data$author_followers)~authors_rank+published, clean.data, sum)
+names(model.data) <- c("rank", "published", "sim.1.day", "comments", "votes", "followers")
 
 # melt data frame according to 1-day similarity
 melted.model.data <- melt(model.data, measure.vars = 3)
@@ -225,15 +230,71 @@ dev.off()
 
 # what is the relationship between author's rank, 1-day similarity and the visibility of a document
 
-png("model.rank.1.d.similarity.rank.png")
-plot <- ggplot(model.data, aes(x = sim.1.day, y = rank)) + 
-  geom_point() + 
-  geom_jitter() +
-  geom_smooth(se = FALSE) +
-  scale_y_reverse() +
-  ggtitle("distribution of ranks based on forward/backward similarity") + 
-  labs(x = "1-day similarity") + 
-  labs(y = "author's rank") 
+png("model.published.1.d.similarity.rank.png")
+plot <- ggplot(model.data, aes(x = published, y = sim.1.day)) + 
+  geom_jitter(aes(colour = rank), alpha = 0.5) +
+  ggtitle("author's rank w.r.t. forward/backward similarity and visibility") + 
+  labs(x = "the resource was featured on home page") + 
+  labs(y = "1-day similarity") 
 plot
 dev.off()
 
+# can we say that certain classes of authors attract more followers?
+
+png("model.published.1.d.similarity.followers.png")
+plot <- ggplot(model.data, aes(x = published, y = sim.1.day)) + 
+  geom_jitter(aes(colour = followers)) +
+  ggtitle("author's followers w.r.t. forward/backward similarity and visibility") + 
+  labs(x = "the resource was featured on home page") + 
+  labs(y = "1-day similarity") 
+plot
+dev.off()
+
+# what is the distribution of the 1-day similarity
+
+png("dist.1.d.similarity.png")
+plot <- ggplot(model.data, aes(x = sim.1.day)) + 
+  geom_density() + 
+  geom_vline(xintercept = -1, colour = "red") +
+  geom_vline(xintercept = +1, colour = "red") +
+  ggtitle("distribution of aggregated forward/backward similarity") + 
+  labs(x = "aggregated 1-day similarity") + 
+  labs(y = "density") 
+plot
+dev.off()
+
+
+# what is the distribution of the number of followers based on discretized classes of resources
+melted.model.data <- melt(model.data[which(model.data$followers < 1000),], measure.vars = 6)
+
+png("model.class.followers.png")
+plot <- ggplot(melted.model.data, aes(x = variable, y = value)) + 
+  geom_boxplot() + 
+  facet_wrap(~ class) +
+  ggtitle("number of followers across classes") + 
+  labs(x = "followers") + 
+  labs(y = "count") +
+  ylim(0,500)
+plot
+dev.off()
+
+# compute the mean number of followers across classes and turn it into a Latex table
+t.followers <- aggregate(followers~class, model.data[which(model.data$followers < 1000),], mean)
+xtable(t.followers)
+
+# what is the distribution of the rank based on discretized classes of resources
+melted.model.data <- melt(model.data[which(model.data$rank > 0),], measure.vars = 3)
+
+png("model.class.rank.png")
+plot <- ggplot(melted.model.data, aes(x = class, y = rank)) + 
+  geom_boxplot() + 
+  facet_wrap(~ published) +
+  ggtitle("average rank across classes") + 
+  labs(x = "the resource was featured on home page") + 
+  labs(y = "average rank") 
+plot
+dev.off()
+
+# compute the mean rank across classes and turn it into a Latex table
+t.rank <- aggregate(rank~class, model.data[which(model.data$rank > 0),], mean)
+xtable(t.rank)
