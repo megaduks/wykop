@@ -109,3 +109,102 @@ plot <- ggplot(data = df, aes(x = id, y = value, colour = L1)) +
 plot
 dev.off()
 
+# what is the expected similarity when looking n days forward/backward? i.e. how significant is 5% change in similarity when looking
+# forward and backward in time, depending on the number of days?
+
+df1 <- data.frame(diff = abs(avg_sim_after1-avg_sim_before1)/max(avg_sim_after1,avg_sim_before1), day = "1 day")
+df2 <- data.frame(diff = abs(avg_sim_after2-avg_sim_before2)/max(avg_sim_after2,avg_sim_before2), day = "2 days")
+df3 <- data.frame(diff = abs(avg_sim_after3-avg_sim_before3)/max(avg_sim_after3,avg_sim_before3), day = "3 days")
+df4 <- data.frame(diff = abs(avg_sim_after4-avg_sim_before4)/max(avg_sim_after4,avg_sim_before4), day = "4 days")
+df5 <- data.frame(diff = abs(avg_sim_after5-avg_sim_before5)/max(avg_sim_after5,avg_sim_before5), day = "5 days")
+df6 <- data.frame(diff = abs(avg_sim_after6-avg_sim_before6)/max(avg_sim_after6,avg_sim_before6), day = "6 days")
+df7 <- data.frame(diff = abs(avg_sim_after7-avg_sim_before7)/max(avg_sim_after7,avg_sim_before7), day = "7 days")
+
+library(plyr)
+df.list <- list(df1, df2, df3, df4, df5, df6, df7)
+df <- ldply(df.list, data.frame)
+
+png("ecdf.similarity.png")
+plot <- ggplot(df, aes(x = diff, group = day, color = day)) + stat_ecdf() + 
+  ggtitle("Forward/backward similarity of comments by time span") + 
+  labs(x = "similarity") + 
+  labs(y = "cummulative probability")
+plot
+dev.off()
+
+# the plot shows that for all time intervals seeing a change of 5% or more is very significant
+# as close to 95% of all documents have the forward/backward similarity variability below 5%
+
+
+### how many documents are submitted by each author depending on her/his rank
+
+author.stats <- data.frame(table(data[which(authors_rank > 0),]$authors_rank))
+author.stats <- transform(author.stats, Var1 = as.numeric(Var1))
+names(author.stats) <- c("rank", "count")
+
+png("count.documents.by.author.png")
+plot <- ggplot(author.stats, aes(x = rank, y = count, group = 1)) +
+  stat_smooth() +
+  ggtitle("number of documents by author's rank") + 
+  labs(x = "author's rank") + 
+  labs(y = "count") + 
+  scale_x_continuous(breaks = seq(0,5000,200))
+  theme(axis.text.x = element_blank()) +
+  theme(legend.position = "none")
+plot
+dev.off()
+
+### let's aggregate data by author and by published/not published, and for each author let's compute its 
+# dominant similarity (forward or backward)
+# we will only consider ranked authors, i.e. we will ommit the authors_rank=0 items
+
+library(scales)
+
+# remove data on anonymous authors
+clean.data <- data[authors_rank > 0, ]
+
+# create a dataset with comments, votes, and 1-day similarities
+model.data <- aggregate(cbind(clean.data$inc1,clean.data$comment_count,clean.data$votes)~authors_rank+published, clean.data, sum)
+names(model.data) <- c("rank", "published", "sim.1.day", "comments", "votes")
+
+# melt data frame according to 1-day similarity
+melted.model.data <- melt(model.data, measure.vars = 3)
+
+png("model.1.day.similarity.png")
+plot <- ggplot(melted.model.data, aes(x = published, y = value), fill = variable) + 
+  geom_boxplot() + 
+  facet_grid(.~variable) +
+  scale_y_log10() +
+  ggtitle("comparison of 1-day similarity w.r.t. document visibility") + 
+  labs(x = "the resource was featured on home page") + 
+  labs(y = "similarity") 
+plot
+dev.off()
+
+# melt data frame according to the number of comments
+melted.model.data <- melt(model.data, measure.vars = 4)
+
+png("model.comments.png")
+plot <- ggplot(melted.model.data, aes(x = published, y = value), fill = variable) + 
+  geom_boxplot() + 
+  facet_grid(.~variable) +
+  scale_y_log10() +
+  ggtitle("comparison of number of comments w.r.t. document visibility") + 
+  labs(x = "the resource was featured on home page") + 
+  labs(y = "number of comments") 
+plot
+dev.off()
+
+# melt data frame according to the number of votes
+melted.model.data <- melt(model.data, measure.vars = 5)
+
+png("model.votes.png")
+plot <- ggplot(melted.model.data, aes(x = published, y = value), fill = variable) + 
+  geom_boxplot() + 
+  facet_grid(.~variable) +
+  scale_y_log10() +
+  ggtitle("comparison of number of votes w.r.t. document visibility") + 
+  labs(x = "the resource was featured on home page") + 
+  labs(y = "number of votes") 
+plot
+dev.off()
