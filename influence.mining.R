@@ -127,7 +127,11 @@ library(plyr)
 df.list <- list(df1, df2, df3, df4, df5, df6, df7)
 df <- ldply(df.list, data.frame)
 
+<<<<<<< HEAD
 png("ecdf-similarity.png")
+=======
+png("ecdf.similarity.png")
+>>>>>>> a445956d037d2225bdd5cbea31ad57a2d3a37102
 plot <- ggplot(df, aes(x = diff, group = day, color = day)) + stat_ecdf() + 
   ggtitle("Forward/backward similarity of comments by time span") + 
   labs(x = "similarity") + 
@@ -145,7 +149,11 @@ author.stats <- data.frame(table(data[which(authors_rank > 0),]$authors_rank))
 author.stats <- transform(author.stats, Var1 = as.numeric(Var1))
 names(author.stats) <- c("rank", "count")
 
+<<<<<<< HEAD
 png("count-documents-by-author.png")
+=======
+png("count.documents.by.author.png")
+>>>>>>> a445956d037d2225bdd5cbea31ad57a2d3a37102
 plot <- ggplot(author.stats, aes(x = rank, y = count, group = 1)) +
   stat_smooth() +
   ggtitle("number of documents by author's rank") + 
@@ -166,18 +174,29 @@ library(scales)
 # remove data on anonymous authors
 clean.data <- data[authors_rank > 0, ]
 
+<<<<<<< HEAD
 # we discretize the dataset into influencers and adopters using simple thresholds of -1 and +1
 model.data$class <- cut(model.data$sim.1.day, c(-Inf,-1,1,Inf))
 
 # create a dataset with comments, votes, and 1-day similarities
 model.data <- aggregate(cbind(clean.data$inc1, clean.data$comment_count, clean.data$votes, clean.data$author_followers)~authors_rank+published, clean.data, sum)
 names(model.data) <- c("rank", "published", "sim.1.day", "comments", "votes", "followers")
+=======
+# create a dataset with comments, votes, and 1-day similarities
+model.data <- aggregate(cbind(clean.data$inc1,clean.data$comment_count,clean.data$votes)~authors_rank+published, clean.data, sum)
+names(model.data) <- c("rank", "published", "sim.1.day", "comments", "votes")
+>>>>>>> a445956d037d2225bdd5cbea31ad57a2d3a37102
 
 # melt data frame according to 1-day similarity
 melted.model.data <- melt(model.data, measure.vars = 3)
 
+<<<<<<< HEAD
 png("model-1-day-similarity.png")
 plot <- ggplot(melted.model.data, aes(x = published, y = value)) + 
+=======
+png("model.1.day.similarity.png")
+plot <- ggplot(melted.model.data, aes(x = published, y = value), fill = variable) + 
+>>>>>>> a445956d037d2225bdd5cbea31ad57a2d3a37102
   geom_boxplot() + 
   facet_grid(.~variable) +
   scale_y_log10() +
@@ -190,8 +209,13 @@ dev.off()
 # melt data frame according to the number of comments
 melted.model.data <- melt(model.data, measure.vars = 4)
 
+<<<<<<< HEAD
 png("model-comments.png")
 plot <- ggplot(melted.model.data, aes(x = published, y = value)) + 
+=======
+png("model.comments.png")
+plot <- ggplot(melted.model.data, aes(x = published, y = value), fill = variable) + 
+>>>>>>> a445956d037d2225bdd5cbea31ad57a2d3a37102
   geom_boxplot() + 
   facet_grid(.~variable) +
   scale_y_log10() +
@@ -204,8 +228,13 @@ dev.off()
 # melt data frame according to the number of votes
 melted.model.data <- melt(model.data, measure.vars = 5)
 
+<<<<<<< HEAD
 png("model-votes.png")
 plot <- ggplot(melted.model.data, aes(x = published, y = value)) + 
+=======
+png("model.votes.png")
+plot <- ggplot(melted.model.data, aes(x = published, y = value), fill = variable) + 
+>>>>>>> a445956d037d2225bdd5cbea31ad57a2d3a37102
   geom_boxplot() + 
   facet_grid(.~variable) +
   scale_y_log10() +
@@ -214,6 +243,7 @@ plot <- ggplot(melted.model.data, aes(x = published, y = value)) +
   labs(y = "number of votes") 
 plot
 dev.off()
+<<<<<<< HEAD
 
 # is there a significant difference in ranks of authors depending on their 1-day forward/backward similarity?
 
