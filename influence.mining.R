@@ -34,6 +34,7 @@ random.comments.stats[4,,] <- as.matrix(summary(random.comments.data$sim))
 # a summary of statistics pertaining to comment similarity
 # Min | 1st Qu.| Median | Mean | 3rd Qu. | Max
 random.comments.stats[,1,]
+xtable(random.comments.stats[,1,])
 
 # compute means over all four comment statistics
 aggregated.random.comments.stats <- colMeans(random.comments.stats[,1,])
@@ -43,7 +44,7 @@ aggregated.random.comments.stats
 # plot an empirical cumulative density function of the similarity for one of the comments
 library(ggplot2)
 
-png("ecdf.comments.png")
+png("ecdf-comments.png")
 plot <- ggplot(random.comments.data, aes(x = sim)) + stat_ecdf(aes(colour = "red")) + 
   ggtitle("Empirical cumulative density function") + 
   labs(x = "similarity") + 
@@ -69,13 +70,13 @@ similarity.backward.by.category <- aggregate(aggregated.columns~category, data, 
 # how many comments are there on average in each category
 # the plot shows the histogram and the density of the number of comments by categories,
 # with the vertical red line showing the mean number of comments (16144)
-count.comments.by.category <- aggregate(comment_count~category, data, sum)
+count.comments.by.category <- aggregate(comment_count~category, data, mean)
 
-png("count.comments.png")
+png("count-comments.png")
 plot <- ggplot(count.comments.by.category, aes(x = comment_count)) +
   geom_density(color = "black") +
   geom_histogram(aes(y = ..density..), alpha = 0.3, fill = "blue", position = "identity") +
-  ggtitle("distribution of comments across categories") +
+  ggtitle("average number of comments across categories") +
   labs(x = "number of comments") +
   labs(y = "density") +
   geom_vline(xintercept = mean(count.comments.by.category$comment_count), colour = "red")
@@ -99,13 +100,13 @@ for (i in forward.between.day.similarity) {
 
 df <- data.frame(cbind(id = rep(c(1:6),2), melt(list(bbds = backward.between.day.similarity, fbds = forward.between.day.similarity))))
 
-png("back.forw.similarity.change.png")
+png("backward-forward-similarity-change.png")
 plot <- ggplot(data = df, aes(x = id, y = value, colour = L1)) + 
   geom_line() +
   scale_x_continuous(breaks = 1:6) +
   scale_color_discrete(breaks = c("bbds", "fbds"), labels = c("backward", "forward")) +
   guides(color = guide_legend(title = NULL)) +
-  ggtitle("average similarity between days") + 
+  ggtitle("average similarity change between days") + 
   labs(x = "day") +
   labs(y = "similarity difference")
 plot
@@ -126,7 +127,7 @@ library(plyr)
 df.list <- list(df1, df2, df3, df4, df5, df6, df7)
 df <- ldply(df.list, data.frame)
 
-png("ecdf.similarity.png")
+png("ecdf-similarity.png")
 plot <- ggplot(df, aes(x = diff, group = day, color = day)) + stat_ecdf() + 
   ggtitle("Forward/backward similarity of comments by time span") + 
   labs(x = "similarity") + 
@@ -144,7 +145,7 @@ author.stats <- data.frame(table(data[which(authors_rank > 0),]$authors_rank))
 author.stats <- transform(author.stats, Var1 = as.numeric(Var1))
 names(author.stats) <- c("rank", "count")
 
-png("count.documents.by.author.png")
+png("count-documents-by-author.png")
 plot <- ggplot(author.stats, aes(x = rank, y = count, group = 1)) +
   stat_smooth() +
   ggtitle("number of documents by author's rank") + 
@@ -175,7 +176,7 @@ names(model.data) <- c("rank", "published", "sim.1.day", "comments", "votes", "f
 # melt data frame according to 1-day similarity
 melted.model.data <- melt(model.data, measure.vars = 3)
 
-png("model.1.day.similarity.png")
+png("model-1-day-similarity.png")
 plot <- ggplot(melted.model.data, aes(x = published, y = value)) + 
   geom_boxplot() + 
   facet_grid(.~variable) +
@@ -189,7 +190,7 @@ dev.off()
 # melt data frame according to the number of comments
 melted.model.data <- melt(model.data, measure.vars = 4)
 
-png("model.comments.png")
+png("model-comments.png")
 plot <- ggplot(melted.model.data, aes(x = published, y = value)) + 
   geom_boxplot() + 
   facet_grid(.~variable) +
@@ -203,7 +204,7 @@ dev.off()
 # melt data frame according to the number of votes
 melted.model.data <- melt(model.data, measure.vars = 5)
 
-png("model.votes.png")
+png("model-votes.png")
 plot <- ggplot(melted.model.data, aes(x = published, y = value)) + 
   geom_boxplot() + 
   facet_grid(.~variable) +
@@ -216,7 +217,7 @@ dev.off()
 
 # is there a significant difference in ranks of authors depending on their 1-day forward/backward similarity?
 
-png("model.rank.1.d.similarity.png")
+png("model-rank-1-d-similarity.png")
 plot <- ggplot(model.data, aes(x = sim.1.day, y = rank)) + 
   geom_point() + 
   geom_jitter() +
@@ -229,8 +230,8 @@ plot
 dev.off()
 
 # what is the relationship between author's rank, 1-day similarity and the visibility of a document
-
-png("model.published.1.d.similarity.rank.png")
+# ----------------------------this figure has been omitted in the paper------------------------------
+png("model-published-1-d-similarity-rank.png")
 plot <- ggplot(model.data, aes(x = published, y = sim.1.day)) + 
   geom_jitter(aes(colour = rank), alpha = 0.5) +
   ggtitle("author's rank w.r.t. forward/backward similarity and visibility") + 
@@ -238,10 +239,11 @@ plot <- ggplot(model.data, aes(x = published, y = sim.1.day)) +
   labs(y = "1-day similarity") 
 plot
 dev.off()
+# ----------------------------this figure has been omitted in the paper------------------------------
 
 # can we say that certain classes of authors attract more followers?
-
-png("model.published.1.d.similarity.followers.png")
+# ----------------------------this figure has been omitted in the paper------------------------------
+png("model-published-1-d-similarity-followers.png")
 plot <- ggplot(model.data, aes(x = published, y = sim.1.day)) + 
   geom_jitter(aes(colour = followers)) +
   ggtitle("author's followers w.r.t. forward/backward similarity and visibility") + 
@@ -249,10 +251,11 @@ plot <- ggplot(model.data, aes(x = published, y = sim.1.day)) +
   labs(y = "1-day similarity") 
 plot
 dev.off()
+# ----------------------------this figure has been omitted in the paper------------------------------
 
 # what is the distribution of the 1-day similarity
 
-png("dist.1.d.similarity.png")
+png("dist-1-d-similarity.png")
 plot <- ggplot(model.data, aes(x = sim.1.day)) + 
   geom_density() + 
   geom_vline(xintercept = -1, colour = "red") +
@@ -267,7 +270,7 @@ dev.off()
 # what is the distribution of the number of followers based on discretized classes of resources
 melted.model.data <- melt(model.data[which(model.data$followers < 1000),], measure.vars = 6)
 
-png("model.class.followers.png")
+png("model-class-followers.png")
 plot <- ggplot(melted.model.data, aes(x = variable, y = value)) + 
   geom_boxplot() + 
   facet_wrap(~ class) +
@@ -285,7 +288,7 @@ xtable(t.followers)
 # what is the distribution of the rank based on discretized classes of resources
 melted.model.data <- melt(model.data[which(model.data$rank > 0),], measure.vars = 3)
 
-png("model.class.rank.png")
+png("model-class-rank.png")
 plot <- ggplot(melted.model.data, aes(x = class, y = rank)) + 
   geom_boxplot() + 
   facet_wrap(~ published) +
